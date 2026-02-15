@@ -106,6 +106,8 @@ NDIVSX = 10  # number of horizontal divisions of the scope display
 NDIVSY = 10  # number of vertical divisions
 # LeCroy waveform format constants
 LECROY_DESCRIPTOR_SIZE = 346  # Typical LeCroy WAVEDESC header size
+# Note: VERTICAL_RESOLUTION is approximate. For accurate conversion, parse VERTICAL_GAIN
+# and VERTICAL_OFFSET from the WAVEDESC structure (see LeCroy Remote Control manual)
 LECROY_VERTICAL_RESOLUTION = 25.0  # Approximate vertical resolution (full scale / max ADC value)
 DEFAULT_TIMEBASE_DIVISIONS = 50  # Default divisions for timebase calculation
 DEFAULT_NPOINTS = 1000  # Default number of points when not parsed from descriptor
@@ -138,7 +140,7 @@ def scopeCmd(cmd):
                 reply = C_.scope.query(cmd)
             else:
                 C_.scope.write(cmd)
-    except:
+    except Exception:
         handle_exception(f'in scopeCmd{cmd}')
     return reply
 
@@ -280,7 +282,7 @@ def wait_for_scopeReady():
                 trigStatus = C_.scope.query('TRIG_MODE?')
             if trigStatus.strip() in ['AUTO', 'NORM']:
                 break
-        except:
+        except Exception:
             pass
     if attempt == 4:
         edev.printw(f'Scope may not be ready after {attempt*0.1} seconds')
@@ -310,6 +312,7 @@ def update_scopeParameters():
             # In practice, need to parse the WAVEDESC structure
             
             # For now, query basic parameters
+            # TODO: Parse WAVEDESC structure for accurate timing parameters
             timebase = C_.scope.query('TIME_DIV?')
             C_.xincrement = float(timebase) / DEFAULT_TIMEBASE_DIVISIONS  # Approximate
             C_.npoints = DEFAULT_NPOINTS  # Default, should parse from descriptor
@@ -520,7 +523,8 @@ def acquire_waveforms():
                             offset = float(C_.scope.query(f'C{ch}:OFFSET?'))
                         
                         # Convert to voltage (simplified)
-                        # Actual conversion requires VERTICAL_GAIN and VERTICAL_OFFSET from descriptor
+                        # TODO: For production use, parse VERTICAL_GAIN and VERTICAL_OFFSET from
+                        # WAVEDESC structure for accurate voltage conversion
                         v = waveform * vdiv / LECROY_VERTICAL_RESOLUTION  # Approximate scaling
                         
                         # publish
@@ -578,7 +582,7 @@ def periodicUpdate():
         time.sleep(0.1)
     try:
         update_scopeParameters()
-    except:
+    except Exception:
         handle_exception('in update_scopeParameters')
     edev.publish('lostTrigs', C_.triggersLost, IF_CHANGED)
     edev.publish('timing', [(round(i,6)) for i in ElapsedTime.values()])
