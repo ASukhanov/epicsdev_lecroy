@@ -1,6 +1,6 @@
 """LeCroy oscilloscope device server using epicsdev module."""
 # pylint: disable=invalid-name
-__version__ = 'v1.0.0 26-02-15'# Initial version adapted from epicsdev_rigol_scope
+__version__ = 'v1.0.0 26-02-15'  # Initial version adapted from epicsdev_rigol_scope
 
 import sys
 import time
@@ -100,10 +100,15 @@ def myPVDefs():
 Threadlock = threading.Lock()
 OK = 0
 NotOK = -1
-IF_CHANGED =True
+IF_CHANGED = True
 ElapsedTime = {}
-NDIVSX = 10# number of horizontal divisions of the scope display
-NDIVSY = 10# number of vertical divisions
+NDIVSX = 10  # number of horizontal divisions of the scope display
+NDIVSY = 10  # number of vertical divisions
+# LeCroy waveform format constants
+LECROY_DESCRIPTOR_SIZE = 346  # Typical LeCroy WAVEDESC header size
+LECROY_VERTICAL_RESOLUTION = 25.0  # Approximate vertical resolution (full scale / max ADC value)
+DEFAULT_TIMEBASE_DIVISIONS = 50  # Default divisions for timebase calculation
+DEFAULT_NPOINTS = 1000  # Default number of points when not parsed from descriptor
 #,,,,,,,,,,,,,,,,,,
 class C_():
     """Namespace for module properties"""
@@ -306,8 +311,8 @@ def update_scopeParameters():
             
             # For now, query basic parameters
             timebase = C_.scope.query('TIME_DIV?')
-            C_.xincrement = float(timebase) / 50  # Approximate
-            C_.npoints = 1000  # Default, should parse from descriptor
+            C_.xincrement = float(timebase) / DEFAULT_TIMEBASE_DIVISIONS  # Approximate
+            C_.npoints = DEFAULT_NPOINTS  # Default, should parse from descriptor
             
             taxis = np.arange(0, C_.npoints) * C_.xincrement
             edev.publish('tAxis', taxis)
@@ -506,9 +511,8 @@ def acquire_waveforms():
                 if len(raw_data) > 100:
                     # Try to extract 16-bit signed integers
                     # Skip header (approximate)
-                    data_start = 346  # Typical LeCroy descriptor size
-                    if len(raw_data) > data_start:
-                        waveform = np.frombuffer(raw_data[data_start:], dtype=np.int16)
+                    if len(raw_data) > LECROY_DESCRIPTOR_SIZE:
+                        waveform = np.frombuffer(raw_data[LECROY_DESCRIPTOR_SIZE:], dtype=np.int16)
                         
                         # Get vertical scaling
                         with Threadlock:
@@ -517,7 +521,7 @@ def acquire_waveforms():
                         
                         # Convert to voltage (simplified)
                         # Actual conversion requires VERTICAL_GAIN and VERTICAL_OFFSET from descriptor
-                        v = waveform * vdiv / 25.0  # Approximate scaling
+                        v = waveform * vdiv / LECROY_VERTICAL_RESOLUTION  # Approximate scaling
                         
                         # publish
                         ts = timer()
