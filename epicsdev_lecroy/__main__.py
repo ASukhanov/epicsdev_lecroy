@@ -1,6 +1,6 @@
 """LeCroy oscilloscope device server using epicsdev module."""
 # pylint: disable=invalid-name
-__version__= 'v1.0.0 26-02-15'# Initial version adapted from epicsdev_rigol_scope
+__version__ = 'v1.0.0 26-02-15'# Initial version adapted from epicsdev_rigol_scope
 
 import sys
 import time
@@ -577,7 +577,7 @@ def periodicUpdate():
     except:
         handle_exception('in update_scopeParameters')
     edev.publish('lostTrigs', C_.triggersLost, IF_CHANGED)
-    edev.publish('timing', [(round(-i,6)) for i in ElapsedTime.values()])
+    edev.publish('timing', [(round(i,6)) for i in ElapsedTime.values()])
 
 def poll():
     """Instrument polling function"""
