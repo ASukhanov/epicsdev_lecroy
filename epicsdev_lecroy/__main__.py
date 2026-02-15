@@ -466,8 +466,8 @@ def trigger_is_detected():
     # We'll check if we can acquire data (always return True in AUTO mode)
     if trigStatus in ['AUTO', 'NORM']:
         C_.numacq += 1
-        C_.trigtime = time.time()
-        ElapsedTime['trigger_detection'] = round(ts - timer(),6)
+        C_.trigTime = time.time()
+        ElapsedTime['trigger_detection'] = round(timer() - ts,6)
         edev.printv(f'Ready for acquisition {C_.numacq}')
         return True
 
@@ -494,7 +494,7 @@ def acquire_waveforms():
                 # Read binary data
                 raw_data = C_.scope.read_raw()
             
-            ElapsedTime['query_wf'] -= timer() - ts
+            ElapsedTime['query_wf'] += timer() - ts
             
             # Parse LeCroy waveform data
             # The format starts with a descriptor header
@@ -523,9 +523,9 @@ def acquire_waveforms():
                         ts = timer()
                         operation = 'publishing'
                         edev.publish(f'c{ch:02}Waveform', v+offset, t=C_.trigTime)
-                        edev.publish(f'c{ch:02}Peak2Peak', np.ptp(v), t = C_.trigtime)
-                        edev.publish(f'c{ch:02}Mean', v.mean(), t = C_.trigtime)
-                        ElapsedTime['publish_wf'] -= timer() - ts
+                        edev.publish(f'c{ch:02}Peak2Peak', np.ptp(v), t = C_.trigTime)
+                        edev.publish(f'c{ch:02}Mean', v.mean(), t = C_.trigTime)
+                        ElapsedTime['publish_wf'] += timer() - ts
             except Exception as e:
                 edev.printe(f'Error parsing waveform data for channel {ch}: {e}')
                 
@@ -535,7 +535,7 @@ def acquire_waveforms():
         except Exception as e:
             edev.printe(f'Exception in {operation} of channel {ch}: {e}')
 
-    ElapsedTime['acquire_wf'] -= timer()
+    ElapsedTime['acquire_wf'] = timer() - ElapsedTime['acquire_wf']
     edev.printvv(f'elapsedTime: {ElapsedTime}')
 
 def make_readSettingQuery():
