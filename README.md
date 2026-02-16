@@ -1,5 +1,5 @@
 # epicsdev_lecroy
-
+Note. Version 1.0.0 was created by github copilot.
 Python-based EPICS PVAccess server for LeCroy oscilloscopes.
 
 It is based on [p4p](https://epics-base.github.io/p4p/) and [epicsdev](https://github.com/ASukhanov/epicsdev) packages 
