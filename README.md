@@ -50,21 +50,16 @@ Connect via TCP/IP socket:
 python -m epicsdev_lecroy -r 'TCPIP::192.168.1.100::1861::SOCKET'
 ```
 
-Connect with custom device name:
-```bash
-python -m epicsdev_lecroy -r 'TCPIP::192.168.1.100::INSTR' -d scope1
-```
-
 Control GUI:
 ```bash
-python -m pypeto -c path_to_repository/config -f epicsdev_lecroy
+python -m pypeto -c path_to_repository/config -f epicsScope -i lecroy0:
 ```
 
 ## Supported Models
 
 This driver should work with LeCroy oscilloscopes that support the MAUI remote control interface, including:
 - WaveSurfer series
-- WaveRunner series  
+- WaveRunner series
 - WavePro series
 - HDO series
 - Other Teledyne LeCroy scopes with MAUI interface
